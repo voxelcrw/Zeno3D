@@ -119,6 +119,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-------------------------------------------- Methods ----------------------------------------------
 	
+	-- Sets the model's CollisionGroup. The group must already exist in the game.
 	function self:SetCollisionGroup(groupName: string)
 		safeAssertT(t.string, groupName)
 		
@@ -133,13 +134,14 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		end
 	end
 	
-	-- Manage object auto rotation
+	-- Enables automatic Y-axis rotation at the given speed (radians per frame). 
+	-- Set to 0 to disable the rotation.
 	function self:SetRotation(speed: number): ()
 		safeAssertT(t.number, speed)
 		rotationSpeed = math.rad(speed)
 	end
 	
-	-- Destroy instance and end controller processes
+	-- Destroys the controller and disconnects all internal bindings.
 	function self:Destroy(): ()	
 		-- Disconnecting from position handler
 		local objCon = table.find(objT, self)
@@ -163,21 +165,21 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-------------------------------------------- Setters ----------------------------------------------
 	
-	-- Change Controller state
+	-- Enable or disable the controller. Must be enabled to render the model.
 	function self:SetActive(state: boolean): ()
 		safeAssertT(t.boolean, state)
 		Active = state
 		Model.Parent = Active and camera or nil
 	end
 	
-	-- Change Object CFrame. CFrame.Angles preferable
+	-- Sets the model's CFrame (rotation). Only use CFrame.Angles
 	function self:SetCFrame(value: CFrame): ()
 		safeAssertT(t.CFrame, value)
 		CF = value
 	end
 	
-	-- Change Object Anchor. Keep in mind that unanchored objects uses
-	-- more Device resources. Having a lot of them may be laggy
+	-- Anchors the model. Anchored models are ~20% more performant.
+	-- This option is true by default.
 	function self:SetAnchor(state: boolean): ()
 		safeAssertT(t.boolean, state)
 		Anchored = state
@@ -198,7 +200,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		table.insert(objT, self)
 	end
 	
-	-- Change Object Adornee.
+	-- Sets the GUI object (adornee) used to render the model.
 	function self:SetAdornee(guiObj: GuiObject): ()
 		safeAssertT(t.instanceIsA("GuiObject"), guiObj)
 		Adornee = guiObj
@@ -216,7 +218,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		Connections["AdorneeSize"] = adorneeSizeCon:Connect(util.onAdorneeChange)
 	end
 	
-	-- Change Object Depth (distance) from camera.
+	-- Sets the model’s rendering depth multiplier (distance from the camera).
 	function self:SetDepth(value: number): ()
 		safeAssertT(t.number, value)
 		Depth = value
@@ -224,39 +226,39 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-------------------------------------------- Getters ----------------------------------------------
 	
-	-- Get the current object being manipulated by controller.
+	-- Returns the model being rendered by the controller.
 	function self:GetObject(): Model
 		return Object3D
 	end
 	
-	-- Get Controller active state.
+	-- Returns whether the controller is active.
 	function self:GetActive(): boolean
 		return Active
 	end
 
-	-- Get Object CFrame.
+	-- Returns the current CFrame used to render the model.
 	function self:GetCFrame(): CFrame
 		return CF
 	end
 
-	-- Get Object Anchor state.
+	-- Returns whether the model is anchored.
 	function self:GetAnchor(): boolean
 		return Anchored
 	end
 
-	-- Get Object Adornee.
+	-- Returns the current adornee used for rendering.
 	function self:GetAdornee(): GuiObject
 		return Adornee
 	end
 
-	-- Get Object Depth (distance) from camera.
+	-- Returns the current depth multiplier.
 	function self:GetDepth(): number
 		return Depth
 	end
 	
 	-------------------------------------------- Util ----------------------------------------------
 	
-	-- Updates adornee changes
+	-- Updates adornee cached properties
 	function util.onAdorneeChange()
 		absSize = Adornee.AbsoluteSize
 		absPos = Adornee.AbsolutePosition
@@ -265,7 +267,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		pointY = absPos.Y + sizeY * 0.5
 	end
 	
-	-- Handles the object position automatically by controller.
+	-- Handles the object rotation defined with self:SetRotation()
+	-- WARNING: This is a private method. Don't call it.
 	function self.__UpdatePos(A,B,C,D,E,F,G,H,I): ()
 		if not Active then
 			if not WasMoved then
@@ -315,7 +318,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		WasMoved = false
 	end
 	
-	-- Handles the object rotation automatically by controller.
+	-- Handles the object rotation defined with self:SetRotation()
+	-- WARNING: This is a private method. Don't call it.
 	function self.__UpdateRot(deltaTime: number): ()
 		if rotationSpeed == 0 then
 			return
@@ -328,7 +332,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		-- Update CF directly
 		CF = CFrame.Angles(0, rotationStep, 0)
 	end
-	
+
 	-- Connections
 	local adorneePosCon = Adornee:GetPropertyChangedSignal("AbsolutePosition")
 	local adorneeSizeCon = Adornee:GetPropertyChangedSignal("AbsoluteSize")

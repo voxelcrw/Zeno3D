@@ -283,9 +283,12 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		pointY = absPos.Y + sizeY * 0.5
 	end
 	
+	-- "__UpdatePos" method cached variables	
+	local ray = nil
+
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
-	function self.__UpdatePos(A,B,C,D,E,F,G,H,I): ()
+	function self.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved): ()
 		if not Active then
 			if not WasMoved then
 				Model:PivotTo(HighCF)
@@ -305,7 +308,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		local depth = GetDepthForWidth(Width, minSize) / Depth
 
 		-- Cast ray from screen point into 3D world
-		local ray = camera.ScreenPointToRay(camera, pointX, pointY, depth)
+		if not cameraMoved then
+			ray = camera.ScreenPointToRay(camera, pointX, pointY, depth)
+		end
+		
 		local pos = ray.Origin + ray.Direction
 
 		-- Prevent invalid (infinite) positions
@@ -381,35 +387,45 @@ camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
 	angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
 end)
 
--- Control objects placement
+-- Control objects placement each frame
 local lastCamView
 local step = 0
-RunService.RenderStepped:Connect(function(delta: number)
-	local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
+local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
+
+local function onRenderStepped(delta: number)
+	-- Detect if the camera Moved since the last Frame
+	local cameraMoved = camera.CFrame == lastCamView
+	
+	if not cameraMoved then
+		_,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
+	end
 	
 	-- Handling objects
 	for _, obj in objects.Anchored do
 		-- Rotates the object (if rotation is enabled)
 		obj.__UpdateRot(delta)
-		
+
 		-- If there's no camera movement and object is anchored
-		-- Minimize resources usage skipping 1 frame each 5
-		if camera.CFrame == lastCamView and step % 5 == 0 then
-			break
+		-- skip 1 frame each 5. Improving performance. 
+		if cameraMoved and step % 5 == 0 then
+			continue
 		end
-		
+
 		-- Update object position
-		obj.__UpdatePos(A,B,C,D,E,F,G,H,I)
+		obj.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved)
 	end
-	
+
 	for _, obj in objects.Unanchored do
 		-- Update object position & orientation
-		obj.__UpdatePos(A,B,C,D,E,F,G,H,I)
+		obj.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved)
 		obj.__UpdateRot(delta)
 	end
-	
+
 	lastCamView = camera.CFrame
-	step = (step + 1 <= 10 and step + 1 or 0)
-end)
+	step += 1
+end
+
+-- Connections --
+RunService.RenderStepped:Connect(onRenderStepped)
 
 return Zeno3D

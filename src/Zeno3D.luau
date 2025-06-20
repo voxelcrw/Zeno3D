@@ -329,7 +329,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
 	function self.__UpdateRot(deltaTime: number): ()
-		if rotationSpeed == 0 then
+		if rotationSpeed == 0 or not Active then
 			return
 		end
 		

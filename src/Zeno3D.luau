@@ -100,6 +100,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- Adornee properties
 	local absSize = Adornee.AbsoluteSize
 	local absPos = Adornee.AbsolutePosition
+	local adorneeRot = math.rad(Adornee.Rotation)
 	local sizeX, sizeY = absSize.X, absSize.Y
 	local pointX = absPos.X + sizeX * 0.5
 	local pointY = absPos.Y + sizeY * 0.5
@@ -210,12 +211,15 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		
 		local adorneePosCon = Adornee:GetPropertyChangedSignal("AbsolutePosition")
 		local adorneeSizeCon = Adornee:GetPropertyChangedSignal("AbsoluteSize")
+		local adorneeRotCon = Adornee:GetPropertyChangedSignal("Rotation")
 		
 		Connections["AdorneePos"]:Disconnect()
 		Connections["AdorneeSize"]:Disconnect()
+		Connections["AdorneeRot"]:Disconnect()
 		
 		Connections["AdorneePos"] = adorneePosCon:Connect(util.onAdorneeChange)
 		Connections["AdorneeSize"] = adorneeSizeCon:Connect(util.onAdorneeChange)
+		Connections["AdorneeRot"] = adorneeRotCon:Connect(util.onAdorneeChange)
 	end
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).
@@ -262,6 +266,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	function util.onAdorneeChange()
 		absSize = Adornee.AbsoluteSize
 		absPos = Adornee.AbsolutePosition
+		adorneeRot = math.rad(Adornee.Rotation)
 		sizeX, sizeY = absSize.X, absSize.Y
 		pointX = absPos.X + sizeX * 0.5
 		pointY = absPos.Y + sizeY * 0.5
@@ -314,7 +319,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		)
 
 		-- Apply transformation to the model
-		Model:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, math.rad(Adornee.Rotation)))
+		Model:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, adorneeRot))
 		WasMoved = false
 	end
 	
@@ -336,8 +341,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- Connections
 	local adorneePosCon = Adornee:GetPropertyChangedSignal("AbsolutePosition")
 	local adorneeSizeCon = Adornee:GetPropertyChangedSignal("AbsoluteSize")
+	local adorneeRotCon = Adornee:GetPropertyChangedSignal("Rotation")
 	Connections["AdorneePos"] = adorneePosCon:Connect(util.onAdorneeChange)
 	Connections["AdorneeSize"] = adorneeSizeCon:Connect(util.onAdorneeChange)
+	Connections["AdorneeRot"] = adorneeRotCon:Connect(util.onAdorneeChange)
 	
 	table.insert(objT, self)
 	self:SetAnchor(true)

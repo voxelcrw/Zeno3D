@@ -60,6 +60,13 @@ local WFactor = AspectRatio * HFactor
 
 local MaxFOV = 120
 
+-- Calculate horizontal and vertical angles
+local rawAngleX = AspectRatio * CamFOV
+local angleX = rawAngleX > MaxFOV and MaxFOV or rawAngleX
+local angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
+
+--[[ CACHE VARIABLES ]]--
+
 -- Returns current screen resolution X, Y
 local function GetScreenResolution(): Vector2
 	local player: Player = Players.LocalPlayer
@@ -287,14 +294,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			return
 		end
 
-		-- Calculate horizontal and vertical angles
-		local angleX = AspectRatio * CamFOV
-		local angleY = CamFOV
-		if angleX > MaxFOV then
-			angleY = CamFOV * (MaxFOV / angleX)
-			angleX = MaxFOV
-		end
-
 		-- Calculate screen center and screen delta
 		local centerX = viewport.X * 0.5
 		local centerY = viewport.Y * 0.5
@@ -363,6 +362,11 @@ camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 	viewport = camera.ViewportSize
 	AspectRatio = viewport.X/viewport.Y
 	WFactor = AspectRatio * HFactor
+
+	-- Horizontal/Vertical angles
+	rawAngleX = AspectRatio * CamFOV
+	angleX = rawAngleX > MaxFOV and MaxFOV or rawAngleX
+	angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
 end)
 
 camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
@@ -370,6 +374,11 @@ camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
 	CamFOV = camera.FieldOfView
 	HFactor = math.tan(math.rad(CamFOV) * 0.5)
 	WFactor = AspectRatio * HFactor
+
+	-- Horizontal/Vertical angles
+	rawAngleX = AspectRatio * CamFOV
+	angleX = rawAngleX > MaxFOV and MaxFOV or rawAngleX
+	angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
 end)
 
 -- Control objects placement

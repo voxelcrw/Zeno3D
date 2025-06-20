@@ -308,10 +308,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		local depth = GetDepthForWidth(Width, minSize) / Depth
 
 		-- Cast ray from screen point into 3D world
-		if not cameraMoved then
+		if cameraMoved then
 			ray = camera.ScreenPointToRay(camera, pointX, pointY, depth)
 		end
-		
+
 		local pos = ray.Origin + ray.Direction
 
 		-- Prevent invalid (infinite) positions
@@ -394,9 +394,9 @@ local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
 
 local function onRenderStepped(delta: number)
 	-- Detect if the camera Moved since the last Frame
-	local cameraMoved = camera.CFrame == lastCamView
+	local cameraMoved = camera.CFrame ~= lastCamView
 	
-	if not cameraMoved then
+	if cameraMoved then
 		_,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
 	end
 	
@@ -407,7 +407,7 @@ local function onRenderStepped(delta: number)
 
 		-- If there's no camera movement and object is anchored
 		-- skip 1 frame each 5. Improving performance. 
-		if cameraMoved and step % 5 == 0 then
+		if not cameraMoved and step % 5 == 0 then
 			continue
 		end
 

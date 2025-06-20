@@ -67,14 +67,6 @@ local angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
 
 --[[ CACHE VARIABLES ]]--
 
--- Returns current screen resolution X, Y
-local function GetScreenResolution(): Vector2
-	local player: Player = Players.LocalPlayer
-	local mouse: Mouse = player:GetMouse()
-	
-	return Vector2.new(mouse.ViewSizeX, mouse.ViewSizeY)
-end
-
 local function GetDepthForWidth(PartWidth, VisibleSize)
 	return math.abs(-0.5*viewport.X*PartWidth/(VisibleSize*WFactor))
 end

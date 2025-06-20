@@ -277,6 +277,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-- "__UpdatePos" method cached variables	
 	local ray = nil
+	local camDepth = nil
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
@@ -301,7 +302,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
-			ray = camera.ScreenPointToRay(camera, pointX, pointY, depth)
+			camDepth = GetDepthForWidth(Width, minSize) / Depth
+			ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 		end
 
 		local pos = ray.Origin + ray.Direction

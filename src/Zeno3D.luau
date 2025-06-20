@@ -44,12 +44,19 @@ local Zeno3D = {}
 -- Variables
 local camera: Camera = workspace.CurrentCamera
 local viewport: Vector2 = camera.ViewportSize
-local CamFOV = camera.FieldOfView
 
 local objects = {Anchored = {}, Unanchored = {}} -- Where objects will be stored and managed
 local components = CFrame.new().components
 local HighCF = CFrame.new(0, 100000, 0)
+
+--[[ CACHE VARIABLES ]]--
+
+-- Camera
+local CamFOV = camera.FieldOfView
 local AspectRatio = viewport.X/viewport.Y
+
+local HFactor = math.tan(math.rad(CamFOV) * 0.5)
+local WFactor = AspectRatio * HFactor
 
 local MaxFOV = 120
 
@@ -61,10 +68,7 @@ local function GetScreenResolution(): Vector2
 	return Vector2.new(mouse.ViewSizeX, mouse.ViewSizeY)
 end
 
-local function GetDepthForWidth(PartWidth, VisibleSize, FOV)
-	local HFactor = math.tan(math.rad(FOV) * 0.5)
-	local WFactor = AspectRatio * HFactor
-	
+local function GetDepthForWidth(PartWidth, VisibleSize)
 	return math.abs(-0.5*viewport.X*PartWidth/(VisibleSize*WFactor))
 end
 
@@ -284,7 +288,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		end
 
 		-- Calculate horizontal and vertical angles
-		local angleX = (viewport.X / viewport.Y) * CamFOV
+		local angleX = AspectRatio * CamFOV
 		local angleY = CamFOV
 		if angleX > MaxFOV then
 			angleY = CamFOV * (MaxFOV / angleX)
@@ -299,10 +303,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Get world depth based on 2D size
 		local minSize = (sizeX < sizeY) and sizeX or sizeY
-		local depth = GetDepthForWidth(Width, minSize, CamFOV)
+		local depth = GetDepthForWidth(Width, minSize) / Depth
 
 		-- Cast ray from screen point into 3D world
-		local ray = camera.ScreenPointToRay(camera, pointX, pointY, depth / Depth)
+		local ray = camera.ScreenPointToRay(camera, pointX, pointY, depth)
 		local pos = ray.Origin + ray.Direction
 
 		-- Prevent invalid (infinite) positions
@@ -355,12 +359,17 @@ end
 
 -- Updates camera properties on change
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+	-- Camera properties
 	viewport = camera.ViewportSize
 	AspectRatio = viewport.X/viewport.Y
+	WFactor = AspectRatio * HFactor
 end)
 
 camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
+	-- Camera properties
 	CamFOV = camera.FieldOfView
+	HFactor = math.tan(math.rad(CamFOV) * 0.5)
+	WFactor = AspectRatio * HFactor
 end)
 
 -- Control objects placement

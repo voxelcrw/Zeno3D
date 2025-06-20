@@ -30,7 +30,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local PhysicsService = game:GetService("PhysicsService")
 
-local libs = scipt:WaitForChild("lib")
+local libs = script:WaitForChild("lib")
 local t = require(libs:WaitForChild("t"))
 
 if not RunService:IsClient() then

@@ -108,6 +108,12 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	local pointX = absPos.X + sizeX * 0.5
 	local pointY = absPos.Y + sizeY * 0.5
 	
+	-- IMPORTANT CACHE --
+
+	-- "__UpdatePos" method cached variables	
+	local camDepth = GetDepthForWidth(Width, minSize) / Depth
+	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+
 	-- Handle assertion errors destroying the Object when any error happens.
 	-- Avoiding memory leaks
 	local function safeAssertT(func, arg)
@@ -229,6 +235,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	function self:SetDepth(value: number): ()
 		safeAssertT(t.number, value)
 		Depth = value
+
+		-- Update object depth
+		camDepth = GetDepthForWidth(Width, minSize) / Depth
+		ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 	end
 	
 	-------------------------------------------- Getters ----------------------------------------------
@@ -264,10 +274,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	end
 	
 	-------------------------------------------- Util ----------------------------------------------
-	
-	-- "__UpdatePos" method cached variables	
-	local camDepth = GetDepthForWidth(Width, minSize) / Depth
-	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 	
 	-- Updates adornee cached properties
 	function util.onAdorneeChange()

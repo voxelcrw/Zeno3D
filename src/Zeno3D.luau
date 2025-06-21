@@ -26,7 +26,6 @@ ________________________________________________________________________________
 ]]--
 
 -- Imports
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local PhysicsService = game:GetService("PhysicsService")
 
@@ -266,6 +265,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-------------------------------------------- Util ----------------------------------------------
 	
+	-- "__UpdatePos" method cached variables	
+	local camDepth = GetDepthForWidth(Width, minSize) / Depth
+	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+	
 	-- Updates adornee cached properties
 	function util.onAdorneeChange()
 		absSize = Adornee.AbsoluteSize
@@ -274,12 +277,15 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		sizeX, sizeY = absSize.X, absSize.Y
 		pointX = absPos.X + sizeX * 0.5
 		pointY = absPos.Y + sizeY * 0.5
-		minSize = math.min(sizeX, sizeY)
+		
+		local newMinSize = math.min(sizeX, sizeY)
+		if newMinSize ~= minSize then
+			minSize = newMinSize
+			
+			camDepth = GetDepthForWidth(Width, minSize) / Depth
+			ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+		end
 	end
-	
-	-- "__UpdatePos" method cached variables	
-	local camDepth = GetDepthForWidth(Width, minSize) / Depth
-	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
@@ -300,7 +306,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
-			camDepth = GetDepthForWidth(Width, minSize) / Depth
 			ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 		end
 

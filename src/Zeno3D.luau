@@ -105,6 +105,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	local absPos = Adornee.AbsolutePosition
 	local adorneeRot = math.rad(Adornee.Rotation)
 	local sizeX, sizeY = absSize.X, absSize.Y
+	local minSize = math.min(sizeX, sizeY)
 	local pointX = absPos.X + sizeX * 0.5
 	local pointY = absPos.Y + sizeY * 0.5
 	
@@ -273,11 +274,12 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		sizeX, sizeY = absSize.X, absSize.Y
 		pointX = absPos.X + sizeX * 0.5
 		pointY = absPos.Y + sizeY * 0.5
+		minSize = math.min(sizeX, sizeY)
 	end
 	
 	-- "__UpdatePos" method cached variables	
-	local ray = nil
-	local camDepth = nil
+	local camDepth = GetDepthForWidth(Width, minSize) / Depth
+	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
@@ -295,10 +297,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		local centerY = viewport.Y * 0.5
 		local deltaX = (pointX - centerX) / centerX
 		local deltaY = (pointY - centerY) / centerY
-
-		-- Get world depth based on 2D size
-		local minSize = (sizeX < sizeY) and sizeX or sizeY
-		local depth = GetDepthForWidth(Width, minSize) / Depth
 
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then

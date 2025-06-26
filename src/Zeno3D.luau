@@ -48,6 +48,10 @@ local objects = {Anchored = {}, Unanchored = {}} -- Where objects will be stored
 local components = CFrame.new().components
 local HighCF = CFrame.new(0, 100000, 0)
 
+-- Types
+export type RotationAxis = "X" | "Y" | "Z" | "XY" | "XZ" | "YZ" | "XYZ"
+local validAxes = {"X", "Y", "Z", "XY", "XZ", "YZ", "XYZ"}
+
 --[[ CACHE VARIABLES ]]--
 
 -- Camera
@@ -89,8 +93,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	local Depth = 1
 	
 	-- Methods properties
-	local rotationStep = 0
 	local rotationSpeed = 0
+	local rotationAxis: RotationAxis = "Y"
 	
 	-- Updates and adjusts the object position
 	local objT = Anchored and objects.Anchored or objects.Unanchored
@@ -144,10 +148,12 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		end
 	end
 	
-	-- Enables automatic Y-axis rotation at the given speed (radians per frame). 
-	-- Set to 0 to disable the rotation.
-	function self:SetRotation(speed: number): ()
+	-- Enables automatic axis rotation at the given speed (radians per frame). 
+	-- Set to 0 to disable the rotation. Axis is Y by default.
+	function self:SetRotation(speed: number, axis: RotationAxis?): ()
 		safeAssertT(t.number, speed)
+		
+		rotationAxis = table.find(validAxes, axis) and axis or "Y" -- Y is the default axis
 		rotationSpeed = math.rad(speed)
 	end
 	
@@ -341,13 +347,26 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		if rotationSpeed == 0 or not Active then
 			return
 		end
-		
-		-- Increases step
-		rotationStep += rotationSpeed * deltaTime
-		rotationStep %= (2 * math.pi)
-		
+
+		-- Get rotation step
+		local rotationStep = rotationSpeed * deltaTime
+
 		-- Update CF directly
-		CF = CFrame.Angles(0, rotationStep, 0)
+		if rotationAxis == "X" then
+			CF *= CFrame.Angles(rotationStep, 0, 0)
+		elseif rotationAxis == "Y" then
+			CF *= CFrame.Angles(0, rotationStep, 0)
+		elseif rotationAxis == "Z" then
+			CF *= CFrame.Angles(0, 0, rotationStep)
+		elseif rotationAxis == "XY" then
+			CF *= CFrame.Angles(rotationStep, rotationStep, 0)
+		elseif rotationAxis == "XZ" then
+			CF *= CFrame.Angles(rotationStep, 0, rotationStep)
+		elseif rotationAxis == "YZ" then
+			CF *= CFrame.Angles(0, rotationStep, rotationStep)
+		elseif rotationAxis == "XYZ" then
+			CF *= CFrame.Angles(rotationStep, rotationStep, rotationStep)
+		end
 	end
 
 	-- Connections

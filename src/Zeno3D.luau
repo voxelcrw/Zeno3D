@@ -112,7 +112,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 	-- "__UpdatePos" method cached variables	
 	local camDepth = GetDepthForWidth(Width, minSize) / Depth
-	local ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+	local ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 
 	-- Handle assertion errors destroying the Object when any error happens.
 	-- Avoiding memory leaks
@@ -238,7 +238,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Update object depth
 		camDepth = GetDepthForWidth(Width, minSize) / Depth
-		ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+		ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 	end
 	
 	-------------------------------------------- Getters ----------------------------------------------
@@ -289,7 +289,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			minSize = newMinSize
 			
 			camDepth = GetDepthForWidth(Width, minSize) / Depth
-			ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 		end
 	end
 
@@ -312,7 +312,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
-			ray = camera.ScreenPointToRay(camera, pointX, pointY, camDepth)
+			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 		end
 
 		local pos = ray.Origin + ray.Direction

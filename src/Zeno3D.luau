@@ -29,11 +29,8 @@ ________________________________________________________________________________
 local RunService = game:GetService("RunService")
 local PhysicsService = game:GetService("PhysicsService")
 
-local libs = script:WaitForChild("lib")
-local t = require(libs:WaitForChild("t"))
-
 if not RunService:IsClient() then
-	error("Zeno3D | Tried to require from a non-client Instance", 2)
+	error("Tried to require from a non-client Instance", 2)
 end
 
 ------------------------------------------------------------------------------------------
@@ -75,9 +72,16 @@ local function GetDepthForWidth(PartWidth, VisibleSize)
 end
 
 function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
-	-- API Parameters validator
-	assert(t.instanceOf("Model")(Model))
-	assert(t.instanceIsA("GuiObject")(Adornee))
+	-- Type check
+	assert(
+		typeof(Model) == "Instance" and Model:IsA("Model"),
+		"Attempt to use "..typeof(Model)..". Model expected."
+	)
+	
+	assert(
+		typeof(Adornee) == "Instance" and Adornee:IsA("GuiObject"),
+		"Attempt to use "..typeof(Model)..". GuiObject expected."
+	)
 	
 	local self = {}
 	local util = {}
@@ -118,43 +122,82 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	local camDepth = GetDepthForWidth(Width, minSize) / Depth
 	local ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 
-	-- Handle assertion errors destroying the Object when any error happens.
-	-- Avoiding memory leaks
-	local function safeAssertT(func, arg)
+	-- Handle type errors destroying the Controller.
+	local function extremeTypeAssert(arg: any, expected: string)
 		local sucess, errorm = pcall(function()
-			assert(func(arg))
+			local argType = typeof(arg)
+			local isValid = (argType == "Instance" and arg:IsA(expected)
+				or argType == expected)
+			
+			local errorLog = "Attempt to use %s. %s expected."
+			assert(isValid, errorLog:format(argType, expected))
 		end)
-		
+
 		if not sucess then
 			self:Destroy()
 			error(errorm, 2)
 		end
 	end
 	
+	-- Handle type errors returning a default value.
+	local function safeTypeAssert(arg: any, expected: string, 
+		default: any): any
+		
+		local argType = typeof(arg)
+		local isValid = (argType == "Instance" and arg:IsA(expected)
+			or argType == expected)
+		
+		if isValid then
+			return arg
+		end
+		
+		-- Logging error if argument is not valid.
+		local log = "Attempt to use %s. %s expected. Value unchanged - %s"
+		
+		local trace = debug.traceback("", 3)
+		local stackLines = {}
+		for line in trace:gmatch("[^\r\n]+") do
+			table.insert(stackLines, line)
+		end
+		
+		--[[
+		Warn when an argument is of an unexpected type. If you see these
+		warnings, use the Explorer to navigate to the script and line 
+		shown in the output. That is where the error occurred.
+		]]--
+		warn(log:format(argType, expected, stackLines[1]))
+		
+		return default
+	end
+	
 	-------------------------------------------- Methods ----------------------------------------------
 	
 	-- Sets the model's CollisionGroup. The group must already exist in the game.
 	function self:SetCollisionGroup(groupName: string)
-		safeAssertT(t.string, groupName)
+		if typeof(groupName) ~= "string" then
+			warn("Attempt to use "..typeof(groupName)..". string expected.")
+			return
+		end
 		
-		if PhysicsService:IsCollisionGroupRegistered(groupName) then
-			for _, v in Object3D:GetDescendants() do
-				if v:IsA("BasePart") then
-					v.CollisionGroup = groupName
-				end
-			end
-		else
+		if not PhysicsService:IsCollisionGroupRegistered(groupName) then
 			warn(groupName.." is not a valid Collision group!")
+			return
+		end
+		
+		for _, v in Object3D:GetDescendants() do
+			if v:IsA("BasePart") then
+				v.CollisionGroup = groupName
+			end
 		end
 	end
 	
 	-- Enables automatic axis rotation at the given speed (radians per frame). 
 	-- Set to 0 to disable the rotation. Axis is Y by default.
 	function self:SetRotation(speed: number, axis: RotationAxis?): ()
-		safeAssertT(t.number, speed)
+		local value = safeTypeAssert(speed, "number", rotationSpeed)
 		
 		rotationAxis = table.find(validAxes, axis) and axis or "Y" -- Y is the default axis
-		rotationSpeed = math.rad(speed)
+		rotationSpeed = math.rad(value)
 	end
 	
 	-- Destroys the controller and disconnects all internal bindings.
@@ -182,23 +225,20 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-------------------------------------------- Setters ----------------------------------------------
 	
 	-- Enable or disable the controller. Must be enabled to render the model.
-	function self:SetActive(state: boolean): ()
-		safeAssertT(t.boolean, state)
-		Active = state
+	function self:SetActive(state: boolean): ()		
+		Active = safeTypeAssert(state, "boolean", Active)
 		Model.Parent = Active and camera or nil
 	end
 	
 	-- Sets the model's CFrame (rotation). Only use CFrame.Angles
 	function self:SetCFrame(value: CFrame): ()
-		safeAssertT(t.CFrame, value)
-		CF = value
+		CF = safeTypeAssert(value, "CFrame", CF)
 	end
 	
 	-- Anchors the model. Anchored models are ~20% more performant.
 	-- This option is true by default.
 	function self:SetAnchor(state: boolean): ()
-		safeAssertT(t.boolean, state)
-		Anchored = state
+		Anchored = safeTypeAssert(state, "boolean", Anchored)
 		
 		for _, v in Object3D:GetDescendants() do
 			if v:IsA("BasePart") then
@@ -218,8 +258,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-- Sets the GUI object (adornee) used to render the model.
 	function self:SetAdornee(guiObj: GuiObject): ()
-		safeAssertT(t.instanceIsA("GuiObject"), guiObj)
-		Adornee = guiObj
+		Adornee = safeTypeAssert(guiObj, "GuiObject", Adornee)
 		
 		-- Update
 		util.onAdorneeChange()
@@ -239,8 +278,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).
 	function self:SetDepth(value: number): ()
-		safeAssertT(t.number, value)
-		Depth = value
+		Depth = safeTypeAssert(value, "number", Depth)
 
 		-- Update object depth
 		camDepth = GetDepthForWidth(Width, minSize) / Depth

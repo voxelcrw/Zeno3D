@@ -423,8 +423,24 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	bindAdorneeChanges()
 	table.insert(objT, self)
 
-	self:SetAnchor(true)
-	self:SetActive(false)
+	task.spawn(function()
+		-- Anchor and deactivate the model
+		self:SetAnchor(true)
+		self:SetActive(false)
+		
+		-- Disable unused physical properties
+		for _, part in pairs(Object3D:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+				part.CanQuery = false
+				part.CanTouch = false
+				part.CastShadow = false
+				part.Massless = true
+				part.EnableFluidForces = false
+				part.CustomPhysicalProperties = PhysicalProperties.new(0.0001, 0, 0, 0, 0, 0)
+			end
+		end
+	end)
 	
 	return self
 end

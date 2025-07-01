@@ -102,7 +102,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- Updates and adjusts the object position
 	local objT = Anchored and objects.Anchored or objects.Unanchored
 	
-	local Extents = Model:GetExtentsSize()
+	local Extents = Object3D:GetExtentsSize()
 	local Width = math.max(Extents.X, Extents.Y, Extents.Z)
 	
 	-- Adornee properties
@@ -252,7 +252,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		end
 		
 		-- Destroying model
-		if Model then Model:Destroy() end
+		if Object3D then Object3D:Destroy() end
 		
 		-- Clearing self, connections and that's it.
 		Connections = nil
@@ -264,7 +264,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- Enable or disable the controller. Must be enabled to render the model.
 	function self:SetActive(state: boolean): ()		
 		Active = safeTypeAssert(state, "boolean", Active)
-		Model.Parent = Active and camera or nil
+		Object3D.Parent = Active and camera or nil
 	end
 	
 	-- Sets the model's CFrame (rotation). Only use CFrame.Angles
@@ -382,7 +382,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		)
 
 		-- Apply transformation to the model
-		Model:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, adorneeRot))
+		Object3D:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, adorneeRot))
 	end
 	
 	-- Handles the object rotation defined with self:SetRotation()

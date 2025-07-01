@@ -21,7 +21,7 @@ ________________________________________________________________________________
 
  @ Butterfly Studios, 2025 (Zeno3D)
  
- Zone3D is a rewritten of Module3D V4: create.roblox.com/store/asset/557211387
+ Zone3D is a rewritten of Module3D V4 by TheNexusAvenger
 _________________________________________________________________________________________
 ]]--
 

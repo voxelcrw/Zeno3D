@@ -84,7 +84,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	)
 	
 	local self = {}
-	local util = {}
 	local Connections = {}
 	
 	-- Initializing instance properties
@@ -170,6 +169,45 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		return default
 	end
 	
+	-- Runs everytime anything changes on Adornee
+	local function onAdorneeChange()
+		absSize = Adornee.AbsoluteSize
+		absPos = Adornee.AbsolutePosition
+		adorneeRot = math.rad(Adornee.Rotation)
+		sizeX, sizeY = absSize.X, absSize.Y
+		pointX = absPos.X + sizeX * 0.5
+		pointY = absPos.Y + sizeY * 0.5
+
+		local newMinSize = math.min(sizeX, sizeY)
+		if newMinSize ~= minSize then
+			minSize = newMinSize
+
+			camDepth = GetDepthForWidth(Width, minSize) / Depth
+			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+		end
+	end
+
+	-- Bind adornee to call "onAdorneeChange" when some properties change.
+	local function bindAdorneeChanges()
+		-- Properties to be binded
+		local bindProperties = {
+			"AbsolutePosition", "AbsoluteSize", "Rotation"
+		}
+		
+		-- Disconnecting old binds
+		for con, signal in Connections do
+			if table.find(bindProperties, con) then
+				signal:Disconnect()
+				Connections[con] = nil
+			end
+		end
+		
+		-- Binding
+		for _, con in bindProperties do
+			Connections[con] = Adornee:GetPropertyChangedSignal(con):Connect(onAdorneeChange)
+		end
+	end
+
 	-------------------------------------------- Methods ----------------------------------------------
 	
 	-- Sets the model's CollisionGroup. The group must already exist in the game.
@@ -261,19 +299,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		Adornee = safeTypeAssert(guiObj, "GuiObject", Adornee)
 		
 		-- Update
-		util.onAdorneeChange()
-		
-		local adorneePosCon = Adornee:GetPropertyChangedSignal("AbsolutePosition")
-		local adorneeSizeCon = Adornee:GetPropertyChangedSignal("AbsoluteSize")
-		local adorneeRotCon = Adornee:GetPropertyChangedSignal("Rotation")
-		
-		Connections["AdorneePos"]:Disconnect()
-		Connections["AdorneeSize"]:Disconnect()
-		Connections["AdorneeRot"]:Disconnect()
-		
-		Connections["AdorneePos"] = adorneePosCon:Connect(util.onAdorneeChange)
-		Connections["AdorneeSize"] = adorneeSizeCon:Connect(util.onAdorneeChange)
-		Connections["AdorneeRot"] = adorneeRotCon:Connect(util.onAdorneeChange)
+		onAdorneeChange()
+		bindAdorneeChanges()
 	end
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).
@@ -318,24 +345,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	end
 	
 	-------------------------------------------- Util ----------------------------------------------
-	
-	-- Updates adornee cached properties
-	function util.onAdorneeChange()
-		absSize = Adornee.AbsoluteSize
-		absPos = Adornee.AbsolutePosition
-		adorneeRot = math.rad(Adornee.Rotation)
-		sizeX, sizeY = absSize.X, absSize.Y
-		pointX = absPos.X + sizeX * 0.5
-		pointY = absPos.Y + sizeY * 0.5
-		
-		local newMinSize = math.min(sizeX, sizeY)
-		if newMinSize ~= minSize then
-			minSize = newMinSize
-			
-			camDepth = GetDepthForWidth(Width, minSize) / Depth
-			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
-		end
-	end
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
@@ -408,14 +417,9 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	end
 
 	-- Connections
-	local adorneePosCon = Adornee:GetPropertyChangedSignal("AbsolutePosition")
-	local adorneeSizeCon = Adornee:GetPropertyChangedSignal("AbsoluteSize")
-	local adorneeRotCon = Adornee:GetPropertyChangedSignal("Rotation")
-	Connections["AdorneePos"] = adorneePosCon:Connect(util.onAdorneeChange)
-	Connections["AdorneeSize"] = adorneeSizeCon:Connect(util.onAdorneeChange)
-	Connections["AdorneeRot"] = adorneeRotCon:Connect(util.onAdorneeChange)
-	
+	bindAdorneeChanges()
 	table.insert(objT, self)
+
 	self:SetAnchor(true)
 	self:SetActive(false)
 	

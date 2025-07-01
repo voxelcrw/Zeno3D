@@ -301,6 +301,9 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		-- Update
 		onAdorneeChange()
 		bindAdorneeChanges()
+
+		-- Update ray results, avoiding visual glitches when the camera hasn't moved.
+		ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
 	end
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).

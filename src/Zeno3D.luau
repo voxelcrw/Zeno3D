@@ -101,7 +101,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	
 	-- Updates and adjusts the object position
 	local objT = Anchored and objects.Anchored or objects.Unanchored
-	local WasMoved = false
 	
 	local Extents = Model:GetExtentsSize()
 	local Width = math.max(Extents.X, Extents.Y, Extents.Z)
@@ -353,10 +352,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	-- WARNING: This is a private method. Don't call it.
 	function self.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved): ()
 		if not Active then
-			if not WasMoved then
-				Model:PivotTo(HighCF)
-				WasMoved = true
-			end
 			return
 		end
 
@@ -388,7 +383,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Apply transformation to the model
 		Model:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, adorneeRot))
-		WasMoved = false
 	end
 	
 	-- Handles the object rotation defined with self:SetRotation()

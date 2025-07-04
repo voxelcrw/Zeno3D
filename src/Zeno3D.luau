@@ -43,7 +43,6 @@ local viewport: Vector2 = camera.ViewportSize
 
 local objects = {Anchored = {}, Unanchored = {}} -- Where objects will be stored and managed
 local components = CFrame.new().components
-local HighCF = CFrame.new(0, 100000, 0)
 
 local cameraMoved = false
 local lastCamView = nil

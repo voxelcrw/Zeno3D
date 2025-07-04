@@ -49,6 +49,8 @@ local lastCamView = nil
 local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
 local frameStepped = 0 -- Frames stepped/calculated since module Require
 
+local cameraUpdated = false
+
 -- Types
 export type RotationAxis = "X" | "Y" | "Z" | "XY" | "XZ" | "YZ" | "XYZ"
 local validAxes = {"X", "Y", "Z", "XY", "XZ", "YZ", "XYZ"}
@@ -133,6 +135,18 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		A,B,C,D,E,F,G,H,I
 	)
 
+	local centerX = viewport.X * 0.5
+	local centerY = viewport.Y * 0.5
+
+	local deltaX = (pointX - centerX) / centerX
+	local deltaY = (pointY - centerY) / centerY
+
+	local rotCF = CFrame.Angles(
+		-math.rad(angleY * 0.5) * deltaY,
+		-math.rad(angleX * 0.5) * deltaX,
+		-adorneeRot
+	)
+
 	-- Handle type errors destroying the Controller.
 	local function extremeTypeAssert(arg: any, expected: string)
 		local sucess, errorm = pcall(function()
@@ -203,6 +217,15 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		sizeX, sizeY = absSize.X, absSize.Y
 		pointX = absPos.X + sizeX * 0.5
 		pointY = absPos.Y + sizeY * 0.5
+
+		deltaX = (pointX - centerX) / centerX
+		deltaY = (pointY - centerY) / centerY
+		
+		rotCF = CFrame.Angles(
+			-math.rad(angleY * 0.5) * deltaY,
+			-math.rad(angleX * 0.5) * deltaX,
+			-adorneeRot
+		)
 
 		local newMinSize = math.min(sizeX, sizeY)
 		if newMinSize ~= minSize then
@@ -382,26 +405,13 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			return
 		end
 
-		-- Calculate screen center and screen delta
-		local centerX = viewport.X * 0.5
-		local centerY = viewport.Y * 0.5
-		local deltaX = (pointX - centerX) / centerX
-		local deltaY = (pointY - centerY) / centerY
-
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
 			performScreenRay()
 		end
 
-		-- Construct final CFrame with rotation offsets
-		local rotCF = CFrame.Angles(
-			-math.rad(angleY * 0.5) * deltaY,
-			-math.rad(angleX * 0.5) * deltaX,
-			0
-		)
-
 		-- Apply transformation to the model
-		Object3D:PivotTo(baseCF * rotCF * CF * CFrame.Angles(0, 0, adorneeRot))
+		Object3D:PivotTo(baseCF * rotCF * CF)
 	end
 	
 	-- Handles the object rotation defined with self:SetRotation()
@@ -436,6 +446,42 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	bindAdorneeChanges()
 	table.insert(objT, self)
 
+	local conViewportSize = camera:GetPropertyChangedSignal("ViewportSize")
+	local conCamFov = camera:GetPropertyChangedSignal("FieldOfView")
+	Connections["ViewportSize"] = conViewportSize:Connect(function()
+		task.spawn(function()
+			-- Calculate screen center and screen delta
+			repeat task.wait() until cameraUpdated
+			cameraUpdated = false
+
+			centerX = viewport.X * 0.5
+			centerY = viewport.Y * 0.5
+
+			deltaX = (pointX - centerX) / centerX
+			deltaY = (pointY - centerY) / centerY
+
+			rotCF = CFrame.Angles(
+				-math.rad(angleY * 0.5) * deltaY,
+				-math.rad(angleX * 0.5) * deltaX,
+				-adorneeRot
+			)
+		end)
+	end)
+	
+	Connections["FOV"] = conCamFov:Connect(function()
+		task.spawn(function()
+			repeat task.wait() until cameraUpdated
+			cameraUpdated = false
+			warn("Perfect")
+
+			rotCF = CFrame.Angles(
+				-math.rad(angleY * 0.5) * deltaY,
+				-math.rad(angleX * 0.5) * deltaX,
+				-adorneeRot
+			)
+		end)
+	end)
+
 	task.spawn(function()
 		-- Anchor and deactivate the model
 		self:SetAnchor(true)
@@ -469,6 +515,7 @@ camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 	rawAngleX = AspectRatio * CamFOV
 	angleX = rawAngleX > MaxFOV and MaxFOV or rawAngleX
 	angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
+	cameraUpdated = true
 end)
 
 camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
@@ -481,6 +528,7 @@ camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
 	rawAngleX = AspectRatio * CamFOV
 	angleX = rawAngleX > MaxFOV and MaxFOV or rawAngleX
 	angleY = CamFOV * (rawAngleX > MaxFOV and (MaxFOV / rawAngleX) or 1)
+	cameraUpdated = true
 end)
 
 -- Control objects placement each frame

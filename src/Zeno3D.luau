@@ -45,6 +45,11 @@ local objects = {Anchored = {}, Unanchored = {}} -- Where objects will be stored
 local components = CFrame.new().components
 local HighCF = CFrame.new(0, 100000, 0)
 
+local cameraMoved = false
+local lastCamView = nil
+local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
+local frameStepped = 0 -- Frames stepped/calculated since module Require
+
 -- Types
 export type RotationAxis = "X" | "Y" | "Z" | "XY" | "XZ" | "YZ" | "XYZ"
 local validAxes = {"X", "Y", "Z", "XY", "XZ", "YZ", "XYZ"}
@@ -118,7 +123,16 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 	-- "__UpdatePos" method cached variables	
 	local camDepth = GetDepthForWidth(Width, minSize) / Depth
+	
 	local ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+	local pos = ray.Origin + ray.Direction
+
+	local baseCF = CFrame.new(
+		(pos.X == math.huge or pos.X == -math.huge) and 0 or pos.X, 
+		(pos.Y == math.huge or pos.Y == -math.huge) and 0 or pos.Y,
+		(pos.Z == math.huge or pos.Z == -math.huge) and 0 or pos.Z, 
+		A,B,C,D,E,F,G,H,I
+	)
 
 	-- Handle type errors destroying the Controller.
 	local function extremeTypeAssert(arg: any, expected: string)
@@ -168,6 +182,20 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		return default
 	end
 	
+	-- Perform a raycast to get model position on screen.
+	-- Updating the values: ray, pos, baseCF. To be further used in "UpdatePos".
+	local function performScreenRay()
+		ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+		pos = ray.Origin + ray.Direction
+		
+		baseCF = CFrame.new(
+			(pos.X == math.huge or pos.X == -math.huge) and 0 or pos.X, 
+			(pos.Y == math.huge or pos.Y == -math.huge) and 0 or pos.Y,
+			(pos.Z == math.huge or pos.Z == -math.huge) and 0 or pos.Z, 
+			A,B,C,D,E,F,G,H,I
+		)
+	end
+
 	-- Runs everytime anything changes on Adornee
 	local function onAdorneeChange()
 		absSize = Adornee.AbsoluteSize
@@ -182,7 +210,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			minSize = newMinSize
 
 			camDepth = GetDepthForWidth(Width, minSize) / Depth
-			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+			performScreenRay()
 		end
 	end
 
@@ -302,7 +330,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		bindAdorneeChanges()
 
 		-- Update ray results, avoiding visual glitches when the camera hasn't moved.
-		ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+		performScreenRay()
 	end
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).
@@ -311,7 +339,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Update object depth
 		camDepth = GetDepthForWidth(Width, minSize) / Depth
-		ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+		performScreenRay()
 	end
 	
 	-------------------------------------------- Getters ----------------------------------------------
@@ -350,7 +378,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
-	function self.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved): ()
+	function self.__UpdatePos(): ()
 		if not Active then
 			return
 		end
@@ -363,18 +391,10 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
-			ray = camera:ScreenPointToRay(pointX, pointY, camDepth)
+			performScreenRay()
 		end
 
-		local pos = ray.Origin + ray.Direction
-
-		-- Prevent invalid (infinite) positions
-		local posX = (pos.X == math.huge or pos.X == -math.huge) and 0 or pos.X
-		local posY = (pos.Y == math.huge or pos.Y == -math.huge) and 0 or pos.Y
-		local posZ = (pos.Z == math.huge or pos.Z == -math.huge) and 0 or pos.Z
-
 		-- Construct final CFrame with rotation offsets
-		local baseCF = CFrame.new(posX, posY, posZ, A,B,C,D,E,F,G,H,I)
 		local rotCF = CFrame.Angles(
 			-math.rad(angleY * 0.5) * deltaY,
 			-math.rad(angleX * 0.5) * deltaX,
@@ -465,13 +485,9 @@ camera:GetPropertyChangedSignal("FieldOfView"):Connect(function()
 end)
 
 -- Control objects placement each frame
-local lastCamView
-local step = 0
-local _,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
-
 local function onRenderStepped(delta: number)
 	-- Detect if the camera Moved since the last Frame
-	local cameraMoved = camera.CFrame ~= lastCamView
+	cameraMoved = (camera.CFrame ~= lastCamView) or frameStepped % 5 == 0
 	
 	if cameraMoved then
 		_,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
@@ -484,22 +500,22 @@ local function onRenderStepped(delta: number)
 
 		-- If there's no camera movement and object is anchored
 		-- skip 1 frame each 5. Improving performance. 
-		if not cameraMoved and step % 5 == 0 then
+		if not cameraMoved then
 			continue
 		end
 
 		-- Update object position
-		obj.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved)
+		obj.__UpdatePos()
 	end
 
 	for _, obj in objects.Unanchored do
 		-- Update object position & orientation
-		obj.__UpdatePos(A,B,C,D,E,F,G,H,I, cameraMoved)
+		obj.__UpdatePos()
 		obj.__UpdateRot(delta)
 	end
 
 	lastCamView = camera.CFrame
-	step += 1
+	frameStepped += 1
 end
 
 -- Connections --

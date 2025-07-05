@@ -534,7 +534,7 @@ end)
 -- Control objects placement each frame
 local function onRenderStepped(delta: number)
 	-- Detect if the camera Moved since the last Frame
-	cameraMoved = (camera.CFrame ~= lastCamView) or frameStepped % 5 == 0
+	cameraMoved = camera.CFrame ~= lastCamView
 	
 	if cameraMoved then
 		_,_,_,A,B,C,D,E,F,G,H,I = components(camera.CFrame)
@@ -547,7 +547,7 @@ local function onRenderStepped(delta: number)
 
 		-- If there's no camera movement and object is anchored
 		-- skip 1 frame each 5. Improving performance. 
-		if not cameraMoved then
+		if not cameraMoved and frameStepped % 5 == 0 then
 			continue
 		end
 

@@ -51,6 +51,11 @@ local frameStepped = 0 -- Frames stepped/calculated since module Require
 
 local cameraUpdated = false
 
+-- When these properties from an Adornee change, update cached values.
+local adorneeBindedProperties = {
+	"AbsolutePosition", "AbsoluteSize", "Rotation"
+}
+
 -- Types
 export type RotationAxis = "X" | "Y" | "Z" | "XY" | "XZ" | "YZ" | "XYZ"
 local validAxes = {"X", "Y", "Z", "XY", "XZ", "YZ", "XYZ"}
@@ -237,22 +242,17 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	end
 
 	-- Bind adornee to call "onAdorneeChange" when some properties change.
-	local function bindAdorneeChanges()
-		-- Properties to be binded
-		local bindProperties = {
-			"AbsolutePosition", "AbsoluteSize", "Rotation"
-		}
-		
+	local function bindAdorneeChanges()		
 		-- Disconnecting old binds
 		for con, signal in Connections do
-			if table.find(bindProperties, con) then
+			if table.find(adorneeBindedProperties, con) then
 				signal:Disconnect()
 				Connections[con] = nil
 			end
 		end
 		
 		-- Binding
-		for _, con in bindProperties do
+		for _, con in adorneeBindedProperties do
 			Connections[con] = Adornee:GetPropertyChangedSignal(con):Connect(onAdorneeChange)
 		end
 	end

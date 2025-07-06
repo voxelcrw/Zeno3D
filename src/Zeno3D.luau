@@ -400,7 +400,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 	-- Handles the object rotation defined with self:SetRotation()
 	-- WARNING: This is a private method. Don't call it.
-	function self.__UpdatePos(): ()
+	function self.__UpdatePos(forceUpdate: boolean?): ()
 		if not Active then
 			return
 		end
@@ -412,7 +412,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			-- Apply transformation to the model
 			Object3D:PivotTo(baseCF * rotCF * CF)
 		else
-			if not Anchored then -- Only move the model if it is Unanchored.
+			if forceUpdate or not Anchored then -- Only move the model if it is Unanchored.
 				Object3D:PivotTo(baseCF * rotCF * CF)
 			end
 		end 

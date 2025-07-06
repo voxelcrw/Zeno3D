@@ -353,6 +353,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Update ray results, avoiding visual glitches when the camera hasn't moved.
 		performScreenRay()
+		self.__UpdatePos(true)
 	end
 	
 	-- Sets the model’s rendering depth multiplier (distance from the camera).

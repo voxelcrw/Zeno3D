@@ -239,6 +239,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 			camDepth = GetDepthForWidth(Width, minSize) / Depth
 			performScreenRay()
 		end
+
+		self.__UpdatePos(true)
 	end
 
 	-- Bind adornee to call "onAdorneeChange" when some properties change.

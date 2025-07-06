@@ -86,9 +86,12 @@ Returns the current depth multiplier.
 
 ## Tips and Tricks
 - You can use TweenService to animate the Adornee (position, size, rotation, etc.) and achieve powerful effects. Like a model growing on screen, a pet hatching animation, or anything like that. Since the Adornee is just a 2D GUI object, you can treat it like any other UI element for animations. Which will also apply to the Model.
--Physical properties like CanCollide, CanTouch, and CanQuery are automatically disabled. Keep them off to reduce overhead and maximize performance.
--Models are anchored by default and is recommended to stay that way for best performance. As shown in the benchmarks.
-
+- Physical properties like *CanCollide*, *CanTouch*, and *CanQuery* are automatically disabled. Keep them off to reduce overhead and maximize performance.
+- Models are anchored by default and is recommended to stay that way for best performance. As shown in the benchmarks.
+- If your models fall when unanchored or don't appearing on screen, they're probably not properly welded. Calling `MakeJoints()` can help fix that.
+- Some specific models (like rigged ones) may still collide even with *CanCollide* set to false. To fix this, create a [CollisionGroup](https://create.roblox.com/docs/reference/engine/classes/BasePart#CollisionGroup) and assign it using the `SetCollisionGroup(groupName)` method.
+- If your model is colliding with Workspace objects, try using `Controller:GetObject():ScaleTo(0.1)` followed by `Controller:SetDepth(2)` (or higher). This keeps the model visually the same size and position on screen, but makes it physically smaller. Which can help avoid unwanted collisions.
+  
 ## Notes
 Zeno3D is generally more performance-intensive than ViewportFrames, but it offers key advantages: full particle support and no visual quality loss. It’s actively maintained and optimized with every version. With the latest performance updates, FPS drops are minimal — often unnoticeable.
 

@@ -302,6 +302,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		-- Remove the model from Workspace after welding
 		Object3D.Parent = oldParent
+		self.__UpdatePos(true)
 	end
 
 	-- Sets the model's CollisionGroup. The group must already exist in the game.
@@ -360,11 +361,13 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 	function self:SetActive(state: boolean): ()		
 		Active = safeTypeAssert(state, "boolean", Active)
 		Object3D.Parent = Active and camera or nil
+		self.__UpdatePos(true)
 	end
 	
 	-- Sets the model's CFrame (rotation). Only use CFrame.Angles
 	function self:SetCFrame(value: CFrame): ()
 		CF = safeTypeAssert(value, "CFrame", CF)
+		self.__UpdatePos(true)
 	end
 	
 	-- Anchors the model. Anchored models are ~20% more performant.
@@ -386,6 +389,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 		objT = Anchored and objects.Anchored or objects.Unanchored
 		table.insert(objT, self)
+		self.__UpdatePos(true)
 	end
 	
 	-- Sets the GUI object (adornee) used to render the model.
@@ -408,6 +412,7 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		-- Update object depth
 		camDepth = GetDepthForWidth(Width, minSize) / Depth
 		performScreenRay()
+		self.__UpdatePos(true)
 	end
 	
 	-------------------------------------------- Getters ----------------------------------------------

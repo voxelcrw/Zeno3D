@@ -469,6 +469,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 				-math.rad(angleX * 0.5) * deltaX,
 				-adorneeRot
 			)
+
+			self.__UpdatePos(true)
 		end)
 	end)
 	
@@ -483,6 +485,8 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 				-math.rad(angleX * 0.5) * deltaX,
 				-adorneeRot
 			)
+
+			self.__UpdatePos(true)
 		end)
 	end)
 

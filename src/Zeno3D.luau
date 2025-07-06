@@ -496,6 +496,9 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		-- Anchor and deactivate the model
 		self:SetAnchor(true)
 		self:SetActive(false)
+
+		-- Force a initial update
+		self.__UpdatePos(true)
 		
 		-- Disable unused physical properties
 		for _, part in pairs(Object3D:GetDescendants()) do

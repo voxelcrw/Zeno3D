@@ -478,7 +478,6 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		task.spawn(function()
 			repeat task.wait() until cameraUpdated
 			cameraUpdated = false
-			warn("Perfect")
 
 			rotCF = CFrame.Angles(
 				-math.rad(angleY * 0.5) * deltaY,

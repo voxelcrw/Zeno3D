@@ -408,10 +408,14 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 		-- Cast ray from screen point into 3D world
 		if cameraMoved then
 			performScreenRay()
-		end
-
-		-- Apply transformation to the model
-		Object3D:PivotTo(baseCF * rotCF * CF)
+			
+			-- Apply transformation to the model
+			Object3D:PivotTo(baseCF * rotCF * CF)
+		else
+			if not Anchored then -- Only move the model if it is Unanchored.
+				Object3D:PivotTo(baseCF * rotCF * CF)
+			end
+		end 
 	end
 	
 	-- Handles the object rotation defined with self:SetRotation()

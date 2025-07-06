@@ -261,6 +261,49 @@ function Zeno3D:Attach3D(Model: Model, Adornee: GuiObject)
 
 	-------------------------------------------- Methods ----------------------------------------------
 	
+	-- Creates joints within the model. If you're using unanchored models that
+	-- aren't properly welded to a PrimaryPart, the model may fall apart or behave
+	-- unexpectedly. This function helps by automatically welding all parts to the PrimaryPart.
+	-- WARNING: Call this before or immediately after unanchoring the model.
+	function self:MakeJoints(): ()
+		local primaryPart = Object3D.PrimaryPart
+
+		-- Create a temporary PrimaryPart if the model doesn't have one.
+		if not primaryPart then
+			primaryPart = Instance.new("Part", Object3D)
+			primaryPart.Name = "Zeno3D_Primary"
+			primaryPart.CanCollide = false
+			primaryPart.CanQuery = false
+			primaryPart.CanTouch = false
+			primaryPart.CastShadow = false
+			primaryPart.Massless = true
+			primaryPart.Transparency = 1
+
+			primaryPart.Size = Extents
+			primaryPart.CFrame = Object3D:GetPivot()
+			Object3D.PrimaryPart = primaryPart
+		end
+
+		-- Temporarily move the model to Workspace, as BasePart:GetJoints()
+		-- only works on parts parented under Workspace.
+		local oldParent = Object3D.Parent
+		Object3D.Parent = workspace
+
+		for _, part in Object3D:GetDescendants() do
+			if (part:IsA("BasePart") and part ~= primaryPart
+				and #part:GetJoints() == 0 and not part:FindFirstChild("Zeno3D_Weld")) then
+				
+				local weld = Instance.new("WeldConstraint", part)
+				weld.Name = "Zeno3D_Weld"
+				weld.Part0 = part
+				weld.Part1 = primaryPart
+			end
+		end
+
+		-- Remove the model from Workspace after welding
+		Object3D.Parent = oldParent
+	end
+
 	-- Sets the model's CollisionGroup. The group must already exist in the game.
 	function self:SetCollisionGroup(groupName: string)
 		if typeof(groupName) ~= "string" then

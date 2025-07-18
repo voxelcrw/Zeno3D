@@ -6,6 +6,7 @@ Zeno3D restores and improves Module3D V4, offering full control over 3D renderin
 ## Installation
 [Download the latest Zeno3D.rbxm](https://github.com/voxelcrw/Zeno3D/releases)\
 [Get Zeno3D on Roblox Creator Hub](https://create.roblox.com/store/asset/117713259173402/Zeno3D)\
+[Get Zeno3D on Wally](https://wally.run/package/voxelcrw/zeno3d)\
 [Copy Zeno3D source code](https://raw.githubusercontent.com/voxelcrw/Zeno3D/refs/heads/main/src/Zeno3D.luau)
 
 ## Benchmark
